@@ -21,13 +21,13 @@ CREATE TABLE bayear (year integer, factor double, primary key (year));
 
 CREATE TABLE bapassport (passportno integer, name varchar(30), primary key (passportno));
 
-CREATE TABLE baday (id integer, weekday varchar(10), factor double, year integer, primary key (id), foreign key (year) references bayear(year));
+CREATE TABLE baday (id integer AUTO_INCREMENT, weekday varchar(10), factor double, year integer, primary key (id), foreign key (year) references bayear(year));
 
 CREATE TABLE baroute (id integer, year integer, price double, cityofDep varchar(3), cityofArr varchar(3), primary key (id, year), foreign key (cityofDep) references baairport(airportcode), foreign key (cityofArr) references baairport(airportcode));
 
-CREATE TABLE baweeklyschedule (id integer, departuretime time, route integer, day integer, primary key (id), foreign key (route) references baroute(id), foreign key (day) references baday(id));
+CREATE TABLE baweeklyschedule (id integer AUTO_INCREMENT, departuretime time, route integer, day integer, primary key (id), foreign key (route) references baroute(id), foreign key (day) references baday(id));
 
-CREATE TABLE baflight (flightno integer, week integer, bookedseats integer DEFAULT 0, weeklyflight integer, primary key (flightno), foreign key(weeklyflight) references baweeklyschedule(id));
+CREATE TABLE baflight (flightno integer AUTO_INCREMENT, week integer, bookedseats integer DEFAULT 0, weeklyflight integer, primary key (flightno), foreign key(weeklyflight) references baweeklyschedule(id));
 
 CREATE TABLE bareservation (reservationno integer, nrofseats integer, flight integer, contact integer, payment integer, primary key (reservationno), foreign key (flight) references baflight(flightno));
 

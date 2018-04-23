@@ -1,0 +1,82 @@
+DROP PROCEDURE IF EXISTS addYear;
+DROP PROCEDURE IF EXISTS addDay;
+DROP PROCEDURE IF EXISTS addDestination;
+DROP PROCEDURE IF EXISTS addRoute;
+DROP PROCEDURE IF EXISTS addFlight;
+DROP FUNCTION IF EXISTS calculateFreeSeats;
+delimiter //
+CREATE PROCEDURE addYear (IN year INT, IN factor DOUBLE)
+BEGIN
+INSERT INTO bayear VALUES (year, factor);
+END
+//
+delimiter ;
+
+delimiter //
+CREATE PROCEDURE addDay (IN year INT, IN day VARCHAR(10), IN factor DOUBLE)
+BEGIN
+INSERT INTO baday(weekday, factor, year) VALUES (day, factor, year);
+END
+//
+delimiter ;
+
+delimiter //
+CREATE PROCEDURE addDestination (IN airport_code VARCHAR(3), IN name VARCHAR(30), IN country VARCHAR(30))
+BEGIN
+INSERT INTO baairport VALUES (airport_code, name, country);
+END
+//
+delimiter ;
+
+delimiter //
+CREATE PROCEDURE addRoute (IN departure_airport_code VARCHAR(3), IN arrival_airport_code VARCHAR(3), IN year INT, IN routeprice DOUBLE)
+BEGIN
+DECLARE route_id INT;
+SELECT baroute.id INTO route_id FROM baroute WHERE baroute.cityofArr = arrival_airport_code AND baroute.cityofDep = departure_airport_code;
+
+IF (route_id IS NULL) THEN
+SELECT MAX(baroute.id) INTO route_id FROM baroute;
+SET route_id = route_id+1;
+IF (route_id IS NULL) THEN
+SET route_id = 0;
+END IF;
+END IF;
+INSERT INTO baroute VALUES (route_id, year, routeprice, departure_airport_code, arrival_airport_code);
+
+END
+//
+delimiter ;
+
+delimiter //
+CREATE PROCEDURE addFlight (IN departure_airport_code varchar(3), IN arrival_airport_code varchar(3), IN year INT, IN day VARCHAR(10), IN departure_time TIME)
+BEGIN
+DECLARE day_id INT;
+DECLARE weekly_flight INT;
+DECLARE week INT;
+DECLARE route INT;
+SET week = 1;
+
+SELECT baday.id INTO day_id FROM baday, bayear WHERE baday.weekday = day AND baday.year = bayear.year AND bayear.year = year;
+
+SELECT baroute.id INTO route FROM baroute WHERE baroute.cityofDep = departure_airport_code AND baroute.cityofArr = arrival_airport_code AND baroute.year = year;
+
+INSERT INTO baweeklyschedule(departuretime, route, day) VALUES (departure_time, route, day_id);
+
+SELECT baweeklyschedule.id INTO weekly_flight FROM baweeklyschedule WHERE baweeklyschedule.day = day_id AND baweeklyschedule.route = route AND baweeklyschedule.departuretime = departure_time;
+
+
+WHILE (week <= 52) DO 
+INSERT INTO baflight(week, weeklyflight) VALUES(week, weekly_flight);
+SET week = week + 1;
+END WHILE;
+
+END
+//
+
+CREATE FUNCTION calculateFreeSeats(flightnumber INT) RETURNS INT
+
+BEGIN
+RETURN 40 - SELECT bookedseats FROM baflight WHERE baflight.flightno = flightnumber;
+END
+//
+delimiter ;
